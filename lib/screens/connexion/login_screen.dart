@@ -36,6 +36,8 @@ telephone: _telephoneController.text.trim(),
 motDePasse: _motDePasseController.text,
 );
 
+final accessToken = resultat['access_token'].toString();
+
 final utilisateur = Map<String, dynamic>.from(
 resultat['user'] as Map,
 );
@@ -56,7 +58,10 @@ return;
 Navigator.pushReplacement(
 context,
 MaterialPageRoute(
-builder: (_) => DashboardScreen(utilisateur: utilisateur),
+  builder: (_) => DashboardScreen(
+    utilisateur: utilisateur,
+    accessToken: accessToken,
+  ),
 ),
 );
 } catch (e) {
