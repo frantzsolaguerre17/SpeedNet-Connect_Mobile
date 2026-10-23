@@ -34,6 +34,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Map<String, dynamic>> _mesCodes = [];
   bool _chargementCodes = false;
   String? _erreurCodes;
+  List<Map<String, dynamic>> _transactions = [];
+  bool _chargementTransactions = false;
+  String? _erreurTransactions;
 
   String get nomUtilisateur {
     final nom = utilisateur['full_name'] ??
@@ -50,6 +53,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return _solde!.toStringAsFixed(2);
   }
 
+  Future<void> _chargerTransactions() async {
+    setState(() {
+      _chargementTransactions = true;
+      _erreurTransactions = null;
+    });
+
+    try {
+      final resultat = await ApiService.obtenirMesTransactions(
+        accessToken: widget.accessToken,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _transactions = resultat;
+        _chargementTransactions = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _erreurTransactions = e.toString();
+        _chargementTransactions = false;
+      });
+    }
+  }
+
 
 
   @override
@@ -57,6 +87,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final pages = <Widget>[
       _construireAccueil(),
       _construireServices(),
+      _construirePageMesCodes(),
       _construireHistorique(),
       _construireProfil(),
     ];
@@ -83,11 +114,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          IconButton(
+         /* IconButton(
             tooltip: 'Notifications',
             onPressed: () => _message('Aucune nouvelle notification.'),
             icon: const Icon(Icons.notifications_none),
-          ),
+          ),*/
           IconButton(
             tooltip: 'Profil',
             onPressed: () {
@@ -214,6 +245,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _chargerForfaits();
           } else if (index == 2) {
             _chargerMesCodes();
+          } else if (index == 3) {
+            _chargerTransactions();
           }
         },
         backgroundColor: Colors.white,
@@ -228,6 +261,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icon(Icons.wifi_outlined),
             selectedIcon: Icon(Icons.wifi),
             label: 'Forfaits',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.confirmation_number_outlined),
+            selectedIcon: Icon(Icons.confirmation_number),
+            label: 'Mes codes',
           ),
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
@@ -250,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Bonjour, $nomUtilisateur 👋',
+          'Bonjour, $nomUtilisateur',
           style: const TextStyle(
             fontSize: 23,
             fontWeight: FontWeight.bold,
@@ -356,7 +394,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 titre: 'Historique',
                 description: 'Transactions',
                 action: () {
-                  setState(() => _indexSelectionne = 2);
+                  setState(() => _indexSelectionne = 3);
+                  _chargerTransactions();
                 },
               ),
             ),
@@ -577,13 +616,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
 
-  // PAGE HISTORIQUE
-  Widget _construireHistorique() {
+
+
+  Widget _construirePageMesCodes() {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         const Text(
-          'Mes codes achetés',
+          'Mes codes Wi-Fi',
           style: TextStyle(
             fontSize: 23,
             fontWeight: FontWeight.bold,
@@ -592,7 +632,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Retrouvez ici les codes Wi-Fi que vous avez achetés.',
+          'Retrouvez ici tous vos codes d’accès achetés.',
           style: TextStyle(color: Colors.black54),
         ),
         const SizedBox(height: 20),
@@ -605,31 +645,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: const Text('Actualiser mes codes'),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
         if (_chargementCodes)
-          const Padding(
-            padding: EdgeInsets.all(30),
-            child: Center(child: CircularProgressIndicator()),
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(30),
+              child: CircularProgressIndicator(),
+            ),
           )
         else if (_erreurCodes != null)
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Column(
               children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 36),
+                const Icon(
+                  Icons.error_outline,
+                  size: 42,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Impossible de charger vos codes.',
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   _erreurCodes!,
                   textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.black54),
                 ),
-                TextButton(
+                TextButton.icon(
                   onPressed: _chargerMesCodes,
-                  child: const Text('Réessayer'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Réessayer'),
                 ),
               ],
             ),
@@ -640,26 +694,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE6ECF5)),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               child: const Column(
                 children: [
                   Icon(
                     Icons.confirmation_number_outlined,
-                    size: 56,
-                    color: Colors.black26,
+                    size: 52,
+                    color: Color(0xFF94A3B8),
                   ),
                   SizedBox(height: 12),
                   Text(
                     'Aucun code acheté',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
+                      fontSize: 16,
                       color: bleuFonce,
                     ),
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Tes codes apparaîtront ici après un achat réussi.',
+                    'Vos codes Wi-Fi apparaîtront ici après un achat.',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.black54),
                   ),
@@ -667,13 +722,297 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             )
           else
-            ..._mesCodes.map((element) {
-              final nom =
-                  element['plan_name']?.toString() ?? 'Forfait Wi-Fi';
-              final code = element['code']?.toString() ?? '';
-              final montant = element['amount']?.toString() ?? '0';
-              final devise = element['currency']?.toString() ?? 'HTG';
-              final date = element['purchased_at']?.toString() ?? '';
+            ...List.generate(
+              _mesCodes.length,
+                  (index) => _construireCarteCode(index),
+            ),
+      ],
+    );
+  }
+
+  Widget _construireCarteCode(int index) {
+    final code = _mesCodes[index];
+    final estDernierAchat = index == 0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: estDernierAchat
+              ? const Color(0xFFB9D2F8)
+              : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: estDernierAchat
+                ? const Color(0xFF2563EB).withValues(alpha: 0.90)
+                : Colors.black.withValues(alpha: 0.05),
+            blurRadius: estDernierAchat ? 18 : 10,
+            spreadRadius: estDernierAchat ? 2 : 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (estDernierAchat)
+              Container(
+                width: 4,
+                color: const Color(0xFF2563EB),
+              ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            code['plan_name']?.toString() ?? 'Forfait Wi-Fi',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF172B4D),
+                            ),
+                          ),
+                        ),
+                        if (estDernierAchat)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: estDernierAchat
+                                  ? Border.all(
+                                color: const Color(0xFF2563EB),
+                                width: 2,
+                              )
+                                  : null,
+                            ),
+                            child: const Text(
+                              'LE PLUS RÉCENT',
+                              style: TextStyle(
+                                color: Color(0xFF1D4ED8),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(color: Color(0xFFE8EDF5)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.wifi_rounded,
+                            color: Color(0xFF334155),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Votre code d’accès',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              SelectableText(
+                                code['code']?.toString() ?? '',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: Color(0xFF172B4D),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Montant payé',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            '${code['amount'] ?? '0'} ${code['currency'] ?? 'HTG'}',
+                            textAlign: TextAlign.end,
+                            style: const TextStyle(
+                              color: Color(0xFF172B4D),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  // PAGE HISTORIQUE
+
+  Widget _construireHistorique() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Historique des transactions',
+          style: TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+            color: bleuFonce,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Retrouvez ici vos recharges et vos achats de forfaits Wi-Fi.',
+          style: TextStyle(color: Colors.black54),
+        ),
+        const SizedBox(height: 20),
+
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed:
+            _chargementTransactions ? null : _chargerTransactions,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Actualiser les transactions'),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        if (_chargementTransactions)
+          const Padding(
+            padding: EdgeInsets.all(30),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_erreurTransactions != null)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 36,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _erreurTransactions!,
+                  textAlign: TextAlign.center,
+                ),
+                TextButton(
+                  onPressed: _chargerTransactions,
+                  child: const Text('Réessayer'),
+                ),
+              ],
+            ),
+          )
+        else if (_transactions.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE6ECF5)),
+              ),
+              child: const Column(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 56,
+                    color: Colors.black26,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Aucune transaction',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: bleuFonce,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Vos recharges et achats apparaîtront ici.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ],
+              ),
+            )
+          else
+            ..._transactions.map((transaction) {
+              final type = transaction['type']?.toString() ?? '';
+              final estRecharge = type == 'recharge';
+
+              final description =
+                  transaction['description']?.toString() ??
+                      (estRecharge ? 'Recharge du portefeuille' : 'Achat Wi-Fi');
+
+              final montant =
+                  transaction['amount']?.toString() ?? '0';
+
+              final devise =
+                  transaction['currency']?.toString() ?? 'HTG';
+
+              final date = transaction['date']?.toString() ?? '';
+
+              final dateLisible = date.isEmpty
+                  ? ''
+                  : date.replaceFirst('T', ' ');
+
+              final icone = estRecharge
+                  ? Icons.account_balance_wallet_outlined
+                  : Icons.wifi;
+
+              final couleur = estRecharge
+                  ? Colors.green
+                  : bleu;
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -681,7 +1020,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE6ECF5)),
+                  border: Border.all(
+                    color: const Color(0xFFE6ECF5),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,71 +1033,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F0FF),
+                            color: estRecharge
+                                ? const Color(0xFFE6F6EC)
+                                : const Color(0xFFE8F0FF),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.wifi, color: bleu),
+                          child: Icon(icone, color: couleur),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(
-                            nom,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: bleuFonce,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                description,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: bleuFonce,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                estRecharge
+                                    ? 'Recharge administrative'
+                                    : 'Achat de forfait Wi-Fi',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
+                        Icon(
+                          estRecharge
+                              ? Icons.check_circle
+                              : Icons.wifi,
+                          color: couleur,
                         ),
                       ],
                     ),
                     const Divider(height: 24),
-                    const Text(
-                      'Ton code Wi-Fi',
-                      style: TextStyle(color: Colors.black54, fontSize: 12),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SelectableText(
-                            code,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: bleu,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Copier le code',
-                          onPressed: code.isEmpty
-                              ? null
-                              : () {
-                            // La copie sera ajoutée à l'étape suivante.
-                            _message('Code : $code');
-                          },
-                          icon: const Icon(Icons.copy, color: bleu),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     Text(
-                      'Montant : $montant $devise',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      '${estRecharge ? '+' : '-'}$montant $devise',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: couleur,
+                      ),
                     ),
-                    if (date.isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                    if (dateLisible.isNotEmpty) ...[
+                      const SizedBox(height: 8),
                       Text(
-                        'Acheté le : ${date.replaceFirst('T', ' ')}',
+                        'Date : $dateLisible',
                         style: const TextStyle(
                           color: Colors.black45,
-                          fontSize: 11,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    if (estRecharge &&
+                        transaction['balance_after'] != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Solde après recharge : '
+                            '${transaction['balance_after']} $devise',
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -767,6 +1112,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ],
     );
   }
+
 
   // PAGE PROFIL
   Widget _construireProfil() {
@@ -995,7 +1341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _chargerSolde();
     _chargerForfaits();
     _chargerMesCodes();
-
+    _chargerTransactions();
   }
 
   Future<void> _chargerSolde() async {

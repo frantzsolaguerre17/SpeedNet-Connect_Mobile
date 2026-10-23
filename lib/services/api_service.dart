@@ -190,6 +190,38 @@ static Future<List<Map<String, dynamic>>> obtenirMesCodesAchetes({
   );
 }
 
+
+
+static Future<List<Map<String, dynamic>>> obtenirMesTransactions({
+  required String accessToken,
+}) async {
+  final response = await http.get(
+    Uri.parse('${AppConfig.apiBaseUrl}/users/me/transactions'),
+    headers: {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    },
+  );
+
+  final dynamic donnees = jsonDecode(response.body);
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    final detail = donnees is Map ? donnees['detail'] : null;
+    throw Exception(
+      detail?.toString() ?? 'Impossible de charger les transactions.',
+    );
+  }
+
+  if (donnees is! List) {
+    throw Exception('La réponse des transactions est invalide.');
+  }
+
+  return donnees
+      .map((element) => Map<String, dynamic>.from(element as Map))
+      .toList();
+}
+
+
 }
 
 
