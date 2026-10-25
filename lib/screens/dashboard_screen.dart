@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../screens/connexion/login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Map<String, dynamic> utilisateur;
@@ -122,7 +123,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             tooltip: 'Profil',
             onPressed: () {
-              setState(() => _indexSelectionne = 3);
+              setState(() => _indexSelectionne = 4);
             },
             icon: const Icon(Icons.account_circle_outlined),
           ),
@@ -1324,9 +1325,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _deconnexion() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
+
+  Future<void> _deconnexion() async {
+    final confirmer = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Déconnexion'),
+        content: const Text(
+          'Voulez-vous vraiment vous déconnecter ?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Se déconnecter'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || confirmer != true) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const ConnexionScreen(),
+      ),
+          (route) => false,
+    );
   }
+
 
   void _message(String texte) {
     ScaffoldMessenger.of(context).showSnackBar(

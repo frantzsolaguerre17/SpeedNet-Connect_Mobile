@@ -13,7 +13,6 @@ class _InscriptionScreenState extends State<InscriptionScreen> {
 final _formKey = GlobalKey<FormState>();
 final _nomController = TextEditingController();
 final _telephoneController = TextEditingController();
-final _emailController = TextEditingController();
 final _motDePasseController = TextEditingController();
 
 bool _chargement = false;
@@ -23,7 +22,6 @@ bool _afficherMotDePasse = false;
 void dispose() {
 _nomController.dispose();
 _telephoneController.dispose();
-_emailController.dispose();
 _motDePasseController.dispose();
 super.dispose();
 }
@@ -34,12 +32,11 @@ if (!_formKey.currentState!.validate()) return;
 setState(() => _chargement = true);
 
 try {
-await ApiService.inscrireUtilisateur(
-nom: _nomController.text.trim(),
-telephone: _telephoneController.text.trim(),
-email: _emailController.text.trim(),
-motDePasse: _motDePasseController.text,
-);
+  await ApiService.inscrireUtilisateur(
+    nom: _nomController.text.trim(),
+    telephone: _telephoneController.text.trim(),
+    motDePasse: _motDePasseController.text,
+  );
 
 if (!mounted) return;
 
@@ -131,26 +128,6 @@ validator: (value) =>
 value == null || value.trim().isEmpty
 ? 'Saisissez votre numéro de téléphone.'
     : null,
-),
-const SizedBox(height: 16),
-
-TextFormField(
-controller: _emailController,
-keyboardType: TextInputType.emailAddress,
-decoration: _decoration(
-'Adresse e-mail',
-Icons.email_outlined,
-),
-validator: (value) {
-if (value == null || value.trim().isEmpty) {
-return 'Saisissez votre adresse e-mail.';
-}
-if (!value.contains('@') ||
-!value.contains('.')) {
-return 'Adresse e-mail invalide.';
-}
-return null;
-},
 ),
 const SizedBox(height: 16),
 

@@ -3,40 +3,39 @@ import 'package:http/http.dart' as http;
 import '../utils/app.config.dart';
 
 class ApiService {
-static Future<Map<String, dynamic>> inscrireUtilisateur({
-required String nom,
-required String telephone,
-required String email,
-required String motDePasse,
-}) async {
-final response = await http.post(
-Uri.parse('${AppConfig.apiBaseUrl}/users/register'),
-headers: {'Content-Type': 'application/json'},
-body: jsonEncode({
-'full_name': nom,
-'phone': telephone,
-'email': email,
-'password': motDePasse,
-}),
-);
 
-final dynamic donnees = jsonDecode(response.body);
+  static Future<Map<String, dynamic>> inscrireUtilisateur({
+    required String nom,
+    required String telephone,
+    required String motDePasse,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/users/register'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'full_name': nom,
+        'phone': telephone,
+        'password': motDePasse,
+      }),
+    );
 
-if (response.statusCode < 200 ||
-response.statusCode >= 300) {
-final detail =
-donnees is Map ? donnees['detail'] : null;
-throw Exception(
-detail?.toString() ?? 'Impossible de créer le compte.',
-);
-}
+    final dynamic donnees = jsonDecode(response.body);
 
-if (donnees is! Map) {
-throw Exception('Réponse invalide du serveur.');
-}
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final detail = donnees is Map ? donnees['detail'] : null;
+      throw Exception(
+        detail?.toString() ?? 'Impossible de créer le compte.',
+      );
+    }
 
-return Map<String, dynamic>.from(donnees);
-}
+    if (donnees is! Map) {
+      throw Exception('Réponse invalide du serveur.');
+    }
+
+    return Map<String, dynamic>.from(donnees);
+  }
+
+
 
 static Future<Map<String, dynamic>> connecterUtilisateur({
 required String telephone,
