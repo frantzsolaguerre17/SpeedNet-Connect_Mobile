@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:speednetconnect_mobile/screens/transfert_screen.dart';
 import '../services/api_service.dart';
 import '../screens/connexion/login_screen.dart';
 
@@ -86,11 +87,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      _construireAccueil(),
-      _construireServices(),
-      _construirePageMesCodes(),
-      _construireHistorique(),
-      _construireProfil(),
+      _construireAccueil(),       // 0
+      _construireServices(),      // 1
+      _construirePageMesCodes(),  // 2
+      _construireTransfert(),     // 3
+      _construireHistorique(),    // 4
+      _construireProfil(),        // 5
     ];
 
     return Scaffold(
@@ -123,7 +125,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           IconButton(
             tooltip: 'Profil',
             onPressed: () {
-              setState(() => _indexSelectionne = 4);
+              setState(() {
+                _indexSelectionne = 5;
+              });
             },
             icon: const Icon(Icons.account_circle_outlined),
           ),
@@ -238,7 +242,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // Navigation inférieure
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _indexSelectionne,
+        selectedIndex: _indexSelectionne < 5 ? _indexSelectionne : 0,
         onDestinationSelected: (index) {
           setState(() => _indexSelectionne = index);
 
@@ -247,6 +251,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           } else if (index == 2) {
             _chargerMesCodes();
           } else if (index == 3) {
+            _chargerSolde();
+          }else if(index == 4){
+            _chargerTransactions();
+          }else if (index == 5) {
+            _chargerSolde();
             _chargerTransactions();
           }
         },
@@ -269,14 +278,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Mes codes',
           ),
           NavigationDestination(
+            icon: Icon(Icons.send_outlined),
+            selectedIcon: Icon(Icons.send),
+            label: 'Transfert',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
             selectedIcon: Icon(Icons.receipt_long),
             label: 'Historique',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profil',
           ),
         ],
       ),
@@ -360,61 +369,165 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 12),
 
-        Row(
-          children: [
-            Expanded(
-              child: _carteAction(
-                icone: Icons.wifi,
-                titre: 'Forfaits Wi-Fi',
-                description: 'Voir les offres',
-                action: () {
-                  setState(() => _indexSelectionne = 1);
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _carteAction(
-                icone: Icons.confirmation_number_outlined,
-                titre: 'Mes codes',
-                description: 'Codes Wi-Fi',
-                action: () {
-                  setState(() => _indexSelectionne = 2);
-                  _chargerMesCodes();
-                },
-              ),
-            ),
-          ],
+
+    // Première ligne : Forfaits et Transfert
+    Row(
+    children: [
+    Expanded(
+    child: _carteAction(
+    icone: Icons.wifi,
+    titre: 'Forfaits Wi-Fi',
+    description: 'Voir les offres',
+    action: () {
+    setState(() => _indexSelectionne = 1);
+    },
+    ),
+    ),
+    const SizedBox(width: 12),
+    Expanded(
+    child: _carteAction(
+    icone: Icons.send_outlined,
+    titre: 'Transfert d’argent',
+    description: 'Envoyer à un client',
+    action: () {
+    Navigator.of(context).push(
+    MaterialPageRoute(
+    builder: (_) => TransfertScreen(
+    accessToken: widget.accessToken,
+    onTransfertReussi: () {
+    _chargerSolde();
+    _chargerTransactions();
+    },
+    ),
+    ),
+    );
+    },
+    ),
+    ),
+    ],
+    ),
+
+    const SizedBox(height: 12),
+
+    // Deuxième ligne : Codes et Historique
+    Row(
+    children: [
+    Expanded(
+    child: _carteAction(
+    icone: Icons.confirmation_number_outlined,
+    titre: 'Mes codes',
+    description: 'Codes Wi-Fi',
+    action: () {
+    setState(() => _indexSelectionne = 2);
+    _chargerMesCodes();
+    },
+    ),
+    ),
+    const SizedBox(width: 12),
+    Expanded(
+    child: _carteAction(
+    icone: Icons.history,
+    titre: 'Historique',
+    description: 'Transactions',
+    action: () {
+    setState(() => _indexSelectionne = 3);
+    _chargerTransactions();
+    },
+    ),
+    ),
+    ],
+    ),
+
+    const SizedBox(height: 12),
+
+    // Assistance sur toute la largeur
+    InkWell(
+    onTap: () => _message(
+    'Contactez le service client SpeedNetConnect.',
+    ),
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    border: Border.all(
+    color: const Color(0xFFE6ECF5),
+    ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.14),
+          blurRadius: 18,
+          spreadRadius: 1,
+          offset: const Offset(0, 6),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _carteAction(
-                icone: Icons.history,
-                titre: 'Historique',
-                description: 'Transactions',
-                action: () {
-                  setState(() => _indexSelectionne = 3);
-                  _chargerTransactions();
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _carteAction(
-                icone: Icons.support_agent,
-                titre: 'Assistance',
-                description: 'Besoin d’aide ?',
-                action: () => _message(
-                  'Contactez le service client SpeedNetConnect.',
-                ),
-              ),
-            ),
-          ],
-        ),
+      ],
+    ),
+    child: Row(
+    children: [
+    Container(
+    width: 48,
+    height: 48,
+    decoration: BoxDecoration(
+    color: const Color(0xFFE8F0FF),
+    borderRadius: BorderRadius.circular(12),
+    ),
+    child: const Icon(
+    Icons.support_agent,
+    color: bleu,
+    size: 28,
+    ),
+    ),
+    const SizedBox(width: 14),
+    const Expanded(
+    child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+    Text(
+    'Assistance',
+    style: TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 15,
+    color: bleuFonce,
+    ),
+    ),
+    SizedBox(height: 4),
+    Text(
+    'Besoin d’aide ? Contactez-nous.',
+    style: TextStyle(
+    color: Colors.black54,
+    fontSize: 12,
+    ),
+    ),
+    ],
+    ),
+    ),
+    const Icon(
+    Icons.arrow_forward_ios,
+    color: bleu,
+    size: 16,
+    ),
+    ],
+    ),
+    ),
+    ),
+
+    const SizedBox(height: 22),
+
         const SizedBox(height: 22),
       ],
+    );
+  }
+
+
+  Widget _construireTransfert() {
+    return TransfertScreen(
+      accessToken: widget.accessToken,
+      onTransfertReussi: () {
+        _chargerSolde();
+        _chargerTransactions();
+      },
     );
   }
 
@@ -544,10 +657,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            nom,
+                            nom.toUpperCase(),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontSize: 16,
                             ),
                           ),
                           const SizedBox(height: 5),
@@ -1148,7 +1261,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 24),
         _ligneProfil(Icons.person_outline, 'Nom complet', nomUtilisateur),
         _ligneProfil(Icons.phone_outlined, 'Téléphone', telephone),
-        _ligneProfil(Icons.email_outlined, 'E-mail', email),
         _ligneProfil(
           Icons.account_balance_wallet_outlined,
           'Solde',
@@ -1187,11 +1299,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Container(
         constraints: const BoxConstraints(minHeight: 135),
         padding: const EdgeInsets.all(15),
+
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE6ECF5)),
+          border: Border.all(
+            color: const Color(0xFFE6ECF5),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1455C0).withValues(alpha: 0.22),
+              blurRadius: 18,
+              spreadRadius: 1,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

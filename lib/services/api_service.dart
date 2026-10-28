@@ -221,6 +221,39 @@ static Future<List<Map<String, dynamic>>> obtenirMesTransactions({
 }
 
 
+
+
+  static Future<Map<String, dynamic>> transfererArgent({
+    required String accessToken,
+    required String phone,
+    required String amount,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.apiBaseUrl}/users/me/transfer'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: jsonEncode({
+        'phone': phone.trim(),
+        'amount': amount.trim().replaceAll(',', '.'),
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final message = data is Map
+          ? data['detail']?.toString() ?? 'Échec du transfert.'
+          : 'Échec du transfert.';
+
+      throw Exception(message);
+    }
+
+    return Map<String, dynamic>.from(data as Map);
+  }
+
+
 }
 
 
