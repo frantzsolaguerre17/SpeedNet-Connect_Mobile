@@ -848,6 +848,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final code = _mesCodes[index];
     final estDernierAchat = index == 0;
 
+    final dateAchat = code['purchased_at']?.toString()
+        ?? code['created_at']?.toString()
+        ?? code['sold_at']?.toString()
+        ?? '';
+
+    final dateFormatee = dateAchat.isEmpty
+        ? null
+        : DateTime.tryParse(dateAchat)?.toLocal();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -993,6 +1002,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
+
+                    if (dateFormatee != null) ...[
+                      const SizedBox(height: 12),
+                      const Divider(color: Color(0xFFE8EDF5)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_month_outlined,
+                            size: 18,
+                            color: Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Date et heure d’achat',
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${dateFormatee.day.toString().padLeft(2, '0')}/'
+                                      '${dateFormatee.month.toString().padLeft(2, '0')}/'
+                                      '${dateFormatee.year} à '
+                                      '${dateFormatee.hour.toString().padLeft(2, '0')}:'
+                                      '${dateFormatee.minute.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(
+                                    color: Color(0xFF172B4D),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
